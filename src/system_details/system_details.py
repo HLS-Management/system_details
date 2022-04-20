@@ -38,7 +38,16 @@ class disk:
         self.percentage = psutil.disk_usage(self.name).percent
 
     def report(self):
-        print(f"Disk: {self.name} | Capacity: {self.total} | Utilised: {self.percentage}%")
+        print(f"Disk: {self.name :>20} | Capacity: {self.total :>6} GB | Utilised: {self.percentage :>5}%")
+
+
+class network_interface:
+    def __init__(self, interface_id: str, interface_details: dict) -> None:
+        self.name = interface_id
+        self.ip = interface_details[2][0]['addr']
+
+    def report(self):
+        print(f"Interface: {self.name :>6} | IP: {self.ip :>16}")
 
 
 class system:
@@ -52,6 +61,7 @@ class system:
         self.processor = cpu(os=self.os, architecture=self.architecture)
         self.memory = byteToGB(psutil.virtual_memory()[0])
         self.disks = []
+        self.connections = []
 
         self.hostname = socket.gethostname()
         if self.hostname[-6:] == ".local":
@@ -61,6 +71,16 @@ class system:
             if self.os == 'MacOS':
                 if partition.mountpoint == "/" or partition.mountpoint[0:8] == '/Volumes':
                     self.disks.append(disk(partition))
+
+        for interface in netifaces.interfaces():
+            interface_details = netifaces.ifaddresses(interface)
+            if 2 not in interface_details.keys():
+                continue
+            if interface_details[2][0]['addr'] == '127.0.0.1':
+                continue
+            else:
+                connection = network_interface(interface_id=interface, interface_details=interface_details)
+                self.connections.append(connection)
 
     def report(self):
         print()
@@ -77,19 +97,17 @@ class system:
         self.processor.report()
         print()
 
-        print(f"Memory: {self.memory}")
+        print("- Memory")
+        print(f"Capacity: {self.memory} GB")
+        print()
 
+        print("- Disks")
         for partition in self.disks:
             partition.report()
         print()
+
+        print("- Network")
         print(f"Hostname: {self.hostname}")
-
-
-test = system()
-
-test.report()
-
-# for interface in netifaces.interfaces():
-#    print(f"{interface} | {netifaces.ifaddresses(interface)}")
-    # en1 = wifi
-    # en0 = eth
+        for interface in self.connections:
+            interface.report()
+        print()
