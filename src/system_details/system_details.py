@@ -111,3 +111,5 @@ class system:
         for interface in self.connections:
             interface.report()
         print()
+
+# TODO - SetProcTitle: https://github.com/dvarrazzo/py-setproctitle
