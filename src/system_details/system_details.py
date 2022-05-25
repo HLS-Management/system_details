@@ -1,14 +1,9 @@
 import psutil
 import netifaces
-
 import platform
 import socket
 
-
-def byteToGB(bytes: int):
-    gb = 1073741824
-    gigs = round(bytes/gb, 2)
-    return gigs
+import src.system_details.calc as calc
 
 
 class cpu:
@@ -32,9 +27,9 @@ class cpu:
 class disk:
     def __init__(self, disk: str) -> None:
         self.name = disk.mountpoint
-        self.total = byteToGB(psutil.disk_usage(self.name).total)
-        self.used = byteToGB(psutil.disk_usage(self.name).used)
-        self.remaining = byteToGB(psutil.disk_usage(self.name).free)
+        self.total = calc.byteToGB(psutil.disk_usage(self.name).total)
+        self.used = calc.byteToGB(psutil.disk_usage(self.name).used)
+        self.remaining = calc.byteToGB(psutil.disk_usage(self.name).free)
         self.percentage = psutil.disk_usage(self.name).percent
 
     def report(self):
@@ -59,7 +54,7 @@ class system:
             self.ver = platform.mac_ver()[0]
         self.architecture = platform.machine()
         self.processor = cpu(os=self.os, architecture=self.architecture)
-        self.memory = byteToGB(psutil.virtual_memory()[0])
+        self.memory = calc.byteToGB(psutil.virtual_memory()[0])
         self.disks = []
         self.connections = []
 

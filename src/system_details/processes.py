@@ -3,11 +3,19 @@ import platform
 import socket
 import os
 
+import src.system_details.calc as calc
+
 
 class process:
     def __init__(self, name: str, tags: set = None) -> None:
         self.tags = tags
         self.name = name
+        self.pid = None
+        self.hostname = None
+        self.cpu_percent = None
+        self.cpu_affinity = None
+        self.memory_percent = None
+        self.memory_usage = None
 
     def define(self, pid: int = None):
         if pid is None:
@@ -18,10 +26,11 @@ class process:
         if self.hostname[-6:] == ".local":
             self.hostname = self.hostname[0:-6]
 
-    def snapshot(self, cpu_percent: float, memory_percent: float, cpu_affinity: int = 0):
+    def snapshot(self, cpu_percent: float, memory_percent: float, memory_usage: float, cpu_affinity: int = 0):
         self.cpu_percent = cpu_percent
         self.memory_percent = memory_percent
         self.cpu_affinity = cpu_affinity
+        self.memory_usage = memory_usage
 
     def report(self):
         print(f"Name:     {self.name}")
@@ -30,7 +39,8 @@ class process:
         print(f"Host:     {self.hostname}")
         print(f"CPU %:    {self.cpu_percent} %")
         print(f"CPU Core: {self.cpu_affinity}")
-        print(f"Memory:   {self.memory_percent} %")
+        print(f"Mem %:    {self.memory_percent} %")
+        print(f"Mem Use:  {self.memory_usage} GB")
 
 
 def check_process_status(query_pid: int, name: str) -> process:
@@ -47,8 +57,11 @@ def check_process_status(query_pid: int, name: str) -> process:
             memory = round(system_process.memory_percent(), 2)
             affinity = 0
         if platform.uname().system == 'Linux':
-            pass  # We will need to implement memory extraction logic
-        response.snapshot(cpu_percent=percent, memory_percent=memory, cpu_affinity=affinity)
+            percent = system_process.cpu_percent()
+            memory_percent = round(system_process.memory_percent(), 2)
+            memory_usage = calc.byteToGB(system_process.memory_info().rss)
+            affinity = system_process.cpu_num()
+        response.snapshot(cpu_percent=percent, memory_percent=memory_percent, cpu_affinity=affinity, memory_usage=memory_usage)
 
         return response
 
